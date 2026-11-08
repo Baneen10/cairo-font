@@ -1,0 +1,55 @@
+
+/* ==========================================
+    1. استدعاء وتطبيق خط Cairo وتأمين الأيقونات
+    ========================================== */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+
+/* تطبيق الخط على جميع النصوص */
+body, p, h1, h2, h3, h4, h5, h6, a, span, button, input, select, textarea {
+    font-family: 'Cairo', sans-serif !important;
+}
+
+/* استثناء جميع أنواع الأيقونات لضمان ظهورها بشكل صحيح */
+.fa, .fas, .far, .fal, .fab, .fa-brands, .icon, [class^="icon-"], [class*=" icon-"] {
+    font-family: "FontAwesome", "Font Awesome 6 Free", "Font Awesome 5 Free", "Font Awesome 6 Brands", "Font Awesome 5 Brands" !important;
+}
+
+/* ==========================================
+    2. تخصيص الشريط العلوي والأزرار (اللون الزيتوني)
+    ========================================== */
+
+/* تلوين الشريط العلوي باللون الزيتوني */
+.navbar.fixed-top {
+    background-color: #556B2F !important;
+}
+
+/* تعديل لون النصوص والأيقونات في الشريط العلوي باللون الأبيض */
+.navbar.fixed-top .nav-link,
+.navbar.fixed-top .navbar-brand {
+    color: #ffffff !important;
+}
+
+/* الأزرار الرئيسية */
+.btn-primary {
+    background-color: #556B2F !important;
+    border-color: #556B2F !important;
+}
+
+/* ==========================================
+    3. تخصيص تذييلة الصفحة (Footer) المتناسقة
+    ========================================== */
+
+/* خلفية التذييلة باللون الزيتوني الداكن المتناسق */
+footer, .footer-section {
+    background-color: #2e3a18 !important;
+    color: #ffffff;
+}
+
+/* تخصيص خطوط العناوين والخط السفلي الأصفر داخل التذييلة */
+footer h4, .footer-section h4 {
+    color: #ffffff !important;
+    border-bottom: 2px solid #556B2F !important;
+    padding-bottom: 8px;
+    margin-bottom: 15px;
+    font-weight: bold;
+}
