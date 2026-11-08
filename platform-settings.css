@@ -53,3 +53,45 @@ footer h4, .footer-section h4 {
     margin-bottom: 15px;
     font-weight: bold;
 }
+
+<footer class="footer-section">
+    <div class="row text-right" dir="rtl" style="color: #ffffff; padding: 25px 0;">
+      
+      <!-- العمود الأول: اتصل بنا -->
+      <div class="col-md-3 col-sm-6">
+        <h4 style="color: #ffffff; border-bottom: 2px solid #ffcc00; padding-bottom: 8px; margin-bottom: 15px; font-weight: bold;">اتصل بنا</h4>
+        <p style="margin-bottom: 8px;">info@university.edu.iq</p>
+        <p style="margin-bottom: 8px;">0780 000 0000</p>
+        <p style="margin-bottom: 8px;">العراق</p>
+      </div>
+
+      <!-- العمود الثاني: الكليات والأقسام -->
+      <div class="col-md-3 col-sm-6">
+        <h4 style="color: #ffffff; border-bottom: 2px solid #ffcc00; padding-bottom: 8px; margin-bottom: 15px; font-weight: bold;">الأقسام العلمية</h4>
+        <ul class="list-unstyled" style="line-height: 2.2;">
+          <li><a href="#" style="color: #d1d5db; text-decoration: none;">كلية الهندسة والحاسوب</a></li>
+          <li><a href="#" style="color: #d1d5db; text-decoration: none;">كلية العلوم والتقنية</a></li>
+          <li><a href="#" style="color: #d1d5db; text-decoration: none;">مركز التعليم المستمر</a></li>
+        </ul>
+      </div>
+
+      <!-- العمود الثالث: روابط سريعة -->
+      <div class="col-md-3 col-sm-6">
+        <h4 style="color: #ffffff; border-bottom: 2px solid #ffcc00; padding-bottom: 8px; margin-bottom: 15px; font-weight: bold;">روابط مهمة</h4>
+        <ul class="list-unstyled" style="line-height: 2.2;">
+          <li><a href="#" style="color: #d1d5db; text-decoration: none;">التقويم الجامعي</a></li>
+          <li><a href="#" style="color: #d1d5db; text-decoration: none;">جدول الامتحانات النهائية</a></li>
+          <li><a href="#" style="color: #d1d5db; text-decoration: none;">دليل استخدام المنصة</a></li>
+        </ul>
+      </div>
+
+      <!-- العمود الرابع: نبذة عن المنصة -->
+      <div class="col-md-3 col-sm-6">
+        <h4 style="color: #ffffff; border-bottom: 2px solid #ffcc00; padding-bottom: 8px; margin-bottom: 15px; font-weight: bold;">عن المنصة</h4>
+        <p style="color: #d1d5db; line-height: 1.8; text-align: justify;">
+          المنصة التعليمية الإلكترونية الرسمية المخصصة لإدارة المحاضرات، متابعة التقييمات والأعمال الدراسية، وتسهيل التواصل بين الطلبة والكادر التدريسي.
+        </p>
+      </div>
+
+    </div>
+</footer>
