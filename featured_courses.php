@@ -2,6 +2,9 @@
 require_once(__DIR__ . '/config.php');
 
 $PAGE->set_url(new moodle_url('/featured_courses.php'));
+
+// الصفحة متاحة فقط للمستخدمين المسجلين (لا زوار ولا حساب ضيف)
+require_login(null, false);
 $PAGE->set_context(context_system::instance());
 $PAGE->set_pagelayout('standard');
 $PAGE->set_title('مجالات متجددة تواكب العصر');

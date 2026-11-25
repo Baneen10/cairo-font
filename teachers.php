@@ -3,6 +3,9 @@ require_once(__DIR__ . '/config.php');
 
 // إعدادات الصفحة الأساسية لكي ترث هيدر وفوتر وقالب المنصة تلقائياً
 $PAGE->set_url(new moodle_url('/teachers.php'));
+
+// الصفحة متاحة فقط للمستخدمين المسجلين (لا زوار ولا حساب ضيف)
+require_login(null, false);
 $PAGE->set_context(context_system::instance());
 $PAGE->set_pagelayout('standard');
 $PAGE->set_title('الهيئة التدريسية');

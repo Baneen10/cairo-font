@@ -5,6 +5,9 @@ $query = optional_param('q', '', PARAM_TEXT);
 $filter = optional_param('filter', 'all', PARAM_ALPHA); // all, courses, teachers, students
 
 $PAGE->set_url(new moodle_url('/global_search.php', ['q' => $query, 'filter' => $filter]));
+
+// الصفحة متاحة فقط للمستخدمين المسجلين (لا زوار ولا حساب ضيف)
+require_login(null, false);
 $PAGE->set_context(context_system::instance());
 
 // البحث عن الطلاب متاح فقط للمستخدمين المسجلين الذين يملكون صلاحية عرض بيانات المستخدمين

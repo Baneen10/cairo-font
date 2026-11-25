@@ -1,0 +1,24 @@
+# رؤوس الأمان لمنصة Moodle (تتطلب تفعيل mod_headers في Apache)
+<IfModule mod_headers.c>
+    # منع تضمين المنصة داخل إطارات مواقع أخرى (Clickjacking)
+    Header always set X-Frame-Options "SAMEORIGIN"
+    # سياسة أمان المحتوى: آمنة مع Moodle لأنها لا تمنع السكربتات الداخلية
+    Header always set Content-Security-Policy "frame-ancestors 'self'; object-src 'none'; base-uri 'self'"
+    # منع المتصفح من تخمين نوع الملفات
+    Header always set X-Content-Type-Options "nosniff"
+    # عدم إرسال الرابط الكامل لمواقع خارجية
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    # إخفاء نسخة PHP
+    Header always unset X-Powered-By
+</IfModule>
+
+# منع الوصول لأي نسخة مستقلة من Adminer أو أدوات قواعد بيانات في جذر الموقع
+<FilesMatch "^(adminer|phpmyadmin|pma)[^/]*\.php$">
+    Require all denied
+</FilesMatch>
+
+# منع الوصول لملفات Git والملفات الحساسة
+RedirectMatch 404 /\.git
+<FilesMatch "\.(env|ini|log|sql|bak|old)$">
+    Require all denied
+</FilesMatch>
