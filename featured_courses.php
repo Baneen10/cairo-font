@@ -16,6 +16,13 @@ if (!empty($selected_course_ids)) {
     $courses = $DB->get_records_select('course', "id $insql AND visible = 1", $inparams, 'fullname ASC');
 }
 
+// إذا لم يُعثر على أي من المقررات المحددة أعلاه (مثلاً أرقام غير موجودة أو مقررات مخفية)،
+// تُعرض أحدث المقررات الظاهرة تلقائياً بدلاً من صفحة فارغة.
+if (empty($courses)) {
+    $courses = $DB->get_records_select('course', 'id <> :siteid AND visible = 1', ['siteid' => SITEID],
+        'timecreated DESC', '*', 0, 8);
+}
+
 echo $OUTPUT->header();
 ?>
 

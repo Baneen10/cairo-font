@@ -6,6 +6,14 @@ $filter = optional_param('filter', 'all', PARAM_ALPHA); // all, courses, teacher
 
 $PAGE->set_url(new moodle_url('/global_search.php', ['q' => $query, 'filter' => $filter]));
 $PAGE->set_context(context_system::instance());
+
+// البحث عن الطلاب متاح فقط للمستخدمين المسجلين الذين يملكون صلاحية عرض بيانات المستخدمين
+// (مدير المنصة والمشرفون)، حفاظاً على خصوصية الطلاب.
+$can_search_students = isloggedin() && !isguestuser()
+    && has_capability('moodle/user:viewdetails', context_system::instance());
+if ($filter === 'students' && !$can_search_students) {
+    $filter = 'all';
+}
 $PAGE->set_pagelayout('standard');
 $PAGE->set_title('نتائج البحث في المنصة');
 $PAGE->set_heading('البحث الشامل في المنصة');
@@ -126,7 +134,7 @@ if (!empty($search_term)) {
                          ORDER BY u.firstname ASC";
         $all_teachers = $DB->get_records_sql($sql_teachers);
         foreach ($all_teachers as $teacher) {
-            $text_to_search = fullname($teacher) . ' ' . $teacher->username . ' ' . strip_tags($teacher->description);
+            $text_to_search = fullname($teacher) . ' ' . strip_tags($teacher->description);
             if (smart_match($text_to_search, $search_variations)) {
                 $teachers[$teacher->id] = $teacher;
             }
@@ -134,7 +142,7 @@ if (!empty($search_term)) {
     }
 
     // 3. البحث في الطلاب
-    if ($filter === 'all' || $filter === 'students') {
+    if ($can_search_students && ($filter === 'all' || $filter === 'students')) {
         $sql_students = "SELECT DISTINCT u.* 
                          FROM {user} u
                          JOIN {role_assignments} ra ON ra.userid = u.id
@@ -243,10 +251,12 @@ echo $OUTPUT->header();
         <form action="" method="get" class="gsearch-form-page">
             <input type="text" name="q" value="<?php echo s($query); ?>" placeholder="اكتب كلمة البحث (مثال: اكسل، IoT، اسم تدريسي...)" required>
             <select name="filter">
-                <option value="all" <?php echo ($filter === 'all') ? 'selected' : ''; ?>>الكل (مقررات، أساتذة، طلاب)</option>
+                <option value="all" <?php echo ($filter === 'all') ? 'selected' : ''; ?>><?php echo $can_search_students ? 'الكل (مقررات، أساتذة، طلاب)' : 'الكل (مقررات وأساتذة)'; ?></option>
                 <option value="courses" <?php echo ($filter === 'courses') ? 'selected' : ''; ?>>المقررات الدراسية فقط</option>
                 <option value="teachers" <?php echo ($filter === 'teachers') ? 'selected' : ''; ?>>التدريسيين فقط</option>
+                <?php if ($can_search_students): ?>
                 <option value="students" <?php echo ($filter === 'students') ? 'selected' : ''; ?>>الطلاب فقط</option>
+                <?php endif; ?>
             </select>
             <button type="submit">بحث</button>
         </form>
@@ -282,7 +292,7 @@ echo $OUTPUT->header();
                 ?>
                     <div class="res-card">
                         <div>
-                            <div class="res-title"><?php echo fullname($teacher); ?></div>
+                            <div class="res-title"><?php echo s(fullname($teacher)); ?></div>
                             <div class="res-meta"><?php echo !empty($teacher->description) ? shorten_text(strip_tags($teacher->description), 90) : 'عضو هيئة تدريس في المنصة'; ?></div>
                         </div>
                         <a href="<?php echo $purl; ?>" class="res-btn">الملف الشخصي</a>
@@ -299,7 +309,7 @@ echo $OUTPUT->header();
                 ?>
                     <div class="res-card">
                         <div>
-                            <div class="res-title"><?php echo fullname($student); ?></div>
+                            <div class="res-title"><?php echo s(fullname($student)); ?></div>
                             <div class="res-meta">طالب مسجل في المنصة</div>
                         </div>
                         <a href="<?php echo $surl; ?>" class="res-btn">عرض الملف</a>

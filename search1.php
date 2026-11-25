@@ -1,8 +1,8 @@
 <?php
-require_once(__DIR__ . '/../config.php');
+require_once(__DIR__ . '/config.php');
 
 // إعدادات الصفحة وربطها بهوية وتصميم قالب المنصة (Academi)
-$PAGE->set_url(new moodle_url('/custom_search/index.php'));
+$PAGE->set_url(new moodle_url('/search1.php'));
 $PAGE->set_context(context_system::instance());
 $PAGE->set_pagelayout('standard');
 $PAGE->set_title('البحث المتقدم - منصة أثر الأسباط');
@@ -206,7 +206,7 @@ echo $OUTPUT->header();
 
                     echo '<div class="result-card">';
                     echo ' <div>';
-                    echo ' <div class="result-title">' . fullname($teacher) . '</div>';
+                    echo ' <div class="result-title">' . s(fullname($teacher)) . '</div>';
                     echo ' <div class="result-meta">المقررات: ' . $courses_list_text . '</div>';
                     echo ' </div>';
                     echo ' <a href="' . $profileurl . '" class="result-link">ملف الأستاذ</a>';

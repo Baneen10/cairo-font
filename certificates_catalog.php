@@ -1,12 +1,6 @@
 <?php
 require_once(__DIR__ . '/config.php');
 
-// تفعيل إظهار الأخطاء لمعرفة السبب فوراً في حال حدوث أي مشكلة
-@error_reporting(E_ALL | E_STRICT);
-@ini_set('display_errors', '1');
-$CFG->debug = (E_ALL | E_STRICT);
-$CFG->debugdisplay = 1;
-
 $PAGE->set_url(new moodle_url('/certificates_catalog.php'));
 $PAGE->set_context(context_system::instance());
 $PAGE->set_pagelayout('standard');
@@ -102,7 +96,7 @@ echo $OUTPUT->header();
 
 <div class="cert-container">
     <div class="cert-intro">
-        شهادات موثقة تعكس حجم التحصيل العلمي والمهاري، وتضيف قيمة حقيقية لسيرتك الذاتية أمام جهات التوظيف[cite: 2]. اشترك في المقررات أدناه وأتمّ متطلباتها للحصول على شهادتك المعتمدة تلقائياً.
+        شهادات موثقة تعكس حجم التحصيل العلمي والمهاري، وتضيف قيمة حقيقية لسيرتك الذاتية أمام جهات التوظيف. اشترك في المقررات أدناه وأتمّ متطلباتها للحصول على شهادتك المعتمدة تلقائياً.
     </div>
 
     <?php if (empty($certificates)): ?>
