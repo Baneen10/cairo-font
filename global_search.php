@@ -68,9 +68,9 @@ function get_search_variations($term) {
 
 /**
  * 3. محرك المطابقة الذكية التلقائية (يكتشف الأخطاء الإملائية لأي اسم تدريسي أو مقرر تلقائياً)
+ * يستقبل نصاً موحّداً مسبقاً عبر normalize_search_text() لتسريع البحث.
  */
-function smart_match($haystack, $search_variations) {
-    $clean_haystack = normalize_search_text($haystack);
+function smart_match($clean_haystack, $search_variations) {
     $haystack_words = explode(' ', $clean_haystack);
 
     foreach ($search_variations as $variant) {
@@ -103,62 +103,114 @@ function smart_match($haystack, $search_variations) {
     return false;
 }
 
+/**
+ * 4. فهرس البحث: نصوص موحّدة جاهزة لكل مقرر / تدريسي / طالب بالشكل [id => نص].
+ * يُبنى مرة واحدة ويُحفظ في ذاكرة Moodle المؤقتة (cache) لمدة 10 دقائق،
+ * فلا تُقرأ كل السجلات من قاعدة البيانات مع كل عملية بحث.
+ */
+function get_search_index($type) {
+    global $DB;
+
+    $ttl = 600; // مدة صلاحية الفهرس بالثواني
+    $cache = cache::make_from_params(cache_store::MODE_APPLICATION, 'core', 'platform_global_search',
+        [], ['simplekeys' => true]);
+    $cached = $cache->get($type);
+    if ($cached !== false && $cached['time'] > time() - $ttl) {
+        return $cached['index'];
+    }
+
+    $index = [];
+    if ($type === 'courses') {
+        $rs = $DB->get_recordset_select('course', 'id <> :siteid AND visible = 1', ['siteid' => SITEID],
+            '', 'id, fullname, shortname, summary');
+        foreach ($rs as $c) {
+            $index[$c->id] = normalize_search_text($c->fullname . ' ' . $c->shortname . ' ' . strip_tags($c->summary));
+        }
+        $rs->close();
+    } else {
+        $roles = ($type === 'teachers') ? ['editingteacher', 'teacher'] : ['student'];
+        list($rolesql, $params) = $DB->get_in_or_equal($roles, SQL_PARAMS_NAMED);
+        $params['courselevel'] = CONTEXT_COURSE;
+        $sql = "SELECT u.id, u.firstname, u.lastname, u.firstnamephonetic, u.lastnamephonetic,
+                       u.middlename, u.alternatename, u.username, u.description
+                  FROM {user} u
+                 WHERE u.deleted = 0 AND u.suspended = 0
+                   AND u.id IN (SELECT ra.userid
+                                  FROM {role_assignments} ra
+                                  JOIN {role} r ON r.id = ra.roleid
+                                  JOIN {context} ctx ON ctx.id = ra.contextid
+                                 WHERE ctx.contextlevel = :courselevel
+                                   AND r.shortname $rolesql)";
+        $rs = $DB->get_recordset_sql($sql, $params);
+        foreach ($rs as $u) {
+            if ($type === 'teachers') {
+                // لا نبحث باسم المستخدم (username) للتدريسيين لأن البحث متاح للزوار.
+                $text = fullname($u) . ' ' . strip_tags((string)$u->description);
+            } else {
+                $text = fullname($u) . ' ' . $u->username;
+            }
+            $index[$u->id] = normalize_search_text($text);
+        }
+        $rs->close();
+    }
+
+    $cache->set($type, ['time' => time(), 'index' => $index]);
+    return $index;
+}
+
+/**
+ * 5. تطبيق البحث على فهرس وإرجاع أرقام السجلات المطابقة (بحد أقصى $limit).
+ */
+function search_index($index, $search_variations, $limit = 50) {
+    $ids = [];
+    foreach ($index as $id => $text) {
+        if (smart_match($text, $search_variations)) {
+            $ids[] = $id;
+            if (count($ids) >= $limit) {
+                break;
+            }
+        }
+    }
+    return $ids;
+}
+
 $courses = [];
 $teachers = [];
 $students = [];
 
 $search_term = trim($query);
+$userfields = 'id, firstname, lastname, firstnamephonetic, lastnamephonetic, middlename, alternatename, description';
 
 if (!empty($search_term)) {
     $search_variations = get_search_variations($search_term);
 
     // 1. البحث في المقررات الدراسية
     if ($filter === 'all' || $filter === 'courses') {
-        $all_courses = $DB->get_records_select('course', 'id != 1 AND visible = 1', null, 'fullname ASC');
-        foreach ($all_courses as $course) {
-            $text_to_search = $course->fullname . ' ' . $course->shortname . ' ' . strip_tags($course->summary);
-            if (smart_match($text_to_search, $search_variations)) {
-                $courses[$course->id] = $course;
-            }
+        $ids = search_index(get_search_index('courses'), $search_variations);
+        if ($ids) {
+            $courses = $DB->get_records_list('course', 'id', $ids, 'fullname ASC', 'id, fullname, summary');
         }
     }
 
     // 2. البحث في التدريسيين
     if ($filter === 'all' || $filter === 'teachers') {
-        $sql_teachers = "SELECT DISTINCT u.* 
-                         FROM {user} u
-                         JOIN {role_assignments} ra ON ra.userid = u.id
-                         JOIN {role} r ON r.id = ra.roleid
-                         WHERE u.deleted = 0 AND u.suspended = 0
-                         AND r.shortname IN ('editingteacher', 'teacher')
-                         ORDER BY u.firstname ASC";
-        $all_teachers = $DB->get_records_sql($sql_teachers);
-        foreach ($all_teachers as $teacher) {
-            $text_to_search = fullname($teacher) . ' ' . strip_tags($teacher->description);
-            if (smart_match($text_to_search, $search_variations)) {
-                $teachers[$teacher->id] = $teacher;
-            }
+        $ids = search_index(get_search_index('teachers'), $search_variations);
+        if ($ids) {
+            $teachers = $DB->get_records_list('user', 'id', $ids, 'firstname ASC', $userfields);
         }
     }
 
     // 3. البحث في الطلاب
     if ($can_search_students && ($filter === 'all' || $filter === 'students')) {
-        $sql_students = "SELECT DISTINCT u.* 
-                         FROM {user} u
-                         JOIN {role_assignments} ra ON ra.userid = u.id
-                         JOIN {role} r ON r.id = ra.roleid
-                         WHERE u.deleted = 0 AND u.suspended = 0
-                         AND r.shortname = 'student'
-                         ORDER BY u.firstname ASC";
-        $all_students = $DB->get_records_sql($sql_students);
-        foreach ($all_students as $student) {
-            $text_to_search = fullname($student) . ' ' . $student->username;
-            if (smart_match($text_to_search, $search_variations)) {
-                $students[$student->id] = $student;
-            }
+        $ids = search_index(get_search_index('students'), $search_variations);
+        if ($ids) {
+            $students = $DB->get_records_list('user', 'id', $ids, 'firstname ASC', $userfields);
         }
     }
 }
+
+// رابط الملف الشخصي يظهر فقط للمستخدمين المسجلين، لأن Moodle يحوّل الزوار إلى صفحة الدخول.
+$show_profile_links = isloggedin() && !isguestuser();
 
 echo $OUTPUT->header();
 ?>
@@ -295,7 +347,9 @@ echo $OUTPUT->header();
                             <div class="res-title"><?php echo s(fullname($teacher)); ?></div>
                             <div class="res-meta"><?php echo !empty($teacher->description) ? shorten_text(strip_tags($teacher->description), 90) : 'عضو هيئة تدريس في المنصة'; ?></div>
                         </div>
+                        <?php if ($show_profile_links): ?>
                         <a href="<?php echo $purl; ?>" class="res-btn">الملف الشخصي</a>
+                        <?php endif; ?>
                     </div>
                 <?php endforeach; ?>
             </div>
@@ -312,7 +366,9 @@ echo $OUTPUT->header();
                             <div class="res-title"><?php echo s(fullname($student)); ?></div>
                             <div class="res-meta">طالب مسجل في المنصة</div>
                         </div>
+                        <?php if ($show_profile_links): ?>
                         <a href="<?php echo $surl; ?>" class="res-btn">عرض الملف</a>
+                        <?php endif; ?>
                     </div>
                 <?php endforeach; ?>
             </div>

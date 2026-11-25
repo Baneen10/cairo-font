@@ -25,6 +25,32 @@ $sql = "SELECT DISTINCT u.id, u.firstname, u.lastname, u.firstnamephonetic, u.la
 
 $teachers = $DB->get_records_sql($sql);
 
+// جلب المقررات التي يدرّسها كل أستاذ فعلياً (دور editingteacher داخل المقرر نفسه)،
+// والظاهرة للطلاب فقط، باستعلام واحد لكل التدريسيين بدل استعلام لكل أستاذ.
+$taught_courses = [];
+if (!empty($teachers)) {
+    list($usersql, $userparams) = $DB->get_in_or_equal(array_keys($teachers), SQL_PARAMS_NAMED);
+    $userparams['courselevel'] = CONTEXT_COURSE;
+    $userparams['siteid'] = SITEID;
+    $rs = $DB->get_recordset_sql("
+        SELECT DISTINCT ra.userid, c.id AS courseid, c.fullname
+          FROM {role_assignments} ra
+          JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'editingteacher'
+          JOIN {context} ctx ON ctx.id = ra.contextid AND ctx.contextlevel = :courselevel
+          JOIN {course} c ON c.id = ctx.instanceid
+         WHERE ra.userid $usersql
+           AND c.visible = 1
+           AND c.id <> :siteid
+      ORDER BY c.fullname ASC", $userparams);
+    foreach ($rs as $row) {
+        $taught_courses[$row->userid][$row->courseid] = $row;
+    }
+    $rs->close();
+}
+
+// رابط الملف الشخصي يظهر فقط للمستخدمين المسجلين، لأن Moodle يحوّل الزوار إلى صفحة الدخول.
+$show_profile_links = isloggedin() && !isguestuser();
+
 echo $OUTPUT->header();
 ?>
 
@@ -122,8 +148,8 @@ echo $OUTPUT->header();
                 $userpicture->size = 100;
                 $picurl = $userpicture->get_url($PAGE)->out(false);
                 
-                // جلب المقررات التي يدرسها هذا الأستاذ
-                $courses = enrol_get_users_courses($teacher->id, true, 'id, fullname');
+                // المقررات التي يدرّسها هذا الأستاذ (محسوبة مسبقاً أعلى الصفحة)
+                $courses = $taught_courses[$teacher->id] ?? [];
                 $profileurl = new moodle_url('/user/profile.php', array('id' => $teacher->id));
                 $fullname = fullname($teacher);
                 $bio = format_text($teacher->description, $teacher->descriptionformat);
@@ -157,9 +183,11 @@ echo $OUTPUT->header();
                         <?php endif; ?>
                     </div>
 
+                    <?php if ($show_profile_links): ?>
                     <div>
                         <a href="<?php echo $profileurl; ?>" class="teacher-btn">عرض الملف الشخصي</a>
                     </div>
+                    <?php endif; ?>
                 </div>
             <?php endforeach; ?>
         </div>
