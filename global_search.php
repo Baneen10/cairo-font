@@ -184,6 +184,14 @@ $teachers = [];
 $students = [];
 
 $search_term = trim($query);
+// حدّ أمني لطول البحث: يمنع هجوم حجب الخدمة (DoS) عبر عبارات بحث ضخمة
+// تُرهق المطابقة التقريبية. الحدّ الأدنى حرفان، والأقصى 100 حرف.
+if (mb_strlen($search_term, 'UTF-8') > 100) {
+    $search_term = mb_substr($search_term, 0, 100, 'UTF-8');
+}
+if (mb_strlen($search_term, 'UTF-8') < 2) {
+    $search_term = '';
+}
 $userfields = 'id, firstname, lastname, firstnamephonetic, lastnamephonetic, middlename, alternatename, description';
 
 if (!empty($search_term)) {
