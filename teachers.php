@@ -16,7 +16,7 @@ $PAGE->set_heading('نخبة التدريسيين في المنصة');
 // استعلام لجلب المستخدمين الذين لديهم دور (editingteacher) في سياق المقررات فقط
 // CONTEXT_COURSE = 50
 $sql = "SELECT DISTINCT u.id, u.firstname, u.lastname, u.firstnamephonetic, u.lastnamephonetic,
-               u.middlename, u.alternatename, u.email, u.description, u.descriptionformat,
+               u.middlename, u.alternatename, u.description, u.descriptionformat,
                u.picture, u.imagealt, u.department, u.institution
         FROM {user} u
         JOIN {role_assignments} ra ON ra.userid = u.id
