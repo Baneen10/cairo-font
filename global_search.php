@@ -6,12 +6,10 @@ $filter = optional_param('filter', 'all', PARAM_ALPHA); // all, courses, teacher
 
 $PAGE->set_url(new moodle_url('/global_search.php', ['q' => $query, 'filter' => $filter]));
 
-// الصفحة متاحة فقط للمستخدمين المسجلين (لا زوار ولا حساب ضيف)
-require_login(null, false);
-if (isguestuser()) {
-    // require_login() يسمح بحساب الضيف، لذلك نمنعه صراحةً ونطلب تسجيل دخول حقيقي
-    throw new require_login_exception('هذه الصفحة متاحة للمستخدمين المسجلين فقط.');
-}
+// الصفحة متاحة للمستخدمين المسجلين ولحساب الضيف (للتعرّف على المنصة فقط).
+// الزائر غير المسجّل يُدخَل تلقائياً كضيف إذا كان دخول الضيف مفعّلاً في إعدادات الموقع.
+// الضيف لا يرى روابط الملفات الشخصية ولا يستطيع البحث عن الطلاب.
+require_login(null, true);
 $PAGE->set_context(context_system::instance());
 
 // البحث عن الطلاب متاح فقط للمستخدمين المسجلين الذين يملكون صلاحية عرض بيانات المستخدمين

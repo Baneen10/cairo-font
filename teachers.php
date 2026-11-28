@@ -4,12 +4,10 @@ require_once(__DIR__ . '/config.php');
 // إعدادات الصفحة الأساسية لكي ترث هيدر وفوتر وقالب المنصة تلقائياً
 $PAGE->set_url(new moodle_url('/teachers.php'));
 
-// الصفحة متاحة فقط للمستخدمين المسجلين (لا زوار ولا حساب ضيف)
-require_login(null, false);
-if (isguestuser()) {
-    // require_login() يسمح بحساب الضيف، لذلك نمنعه صراحةً ونطلب تسجيل دخول حقيقي
-    throw new require_login_exception('هذه الصفحة متاحة للمستخدمين المسجلين فقط.');
-}
+// الصفحة متاحة للمستخدمين المسجلين ولحساب الضيف (للتعرّف على المنصة فقط).
+// الزائر غير المسجّل يُدخَل تلقائياً كضيف إذا كان دخول الضيف مفعّلاً في إعدادات الموقع.
+// الضيف لا يرى روابط الملفات الشخصية ولا يستطيع البحث عن الطلاب.
+require_login(null, true);
 $PAGE->set_context(context_system::instance());
 $PAGE->set_pagelayout('standard');
 $PAGE->set_title('الهيئة التدريسية');
